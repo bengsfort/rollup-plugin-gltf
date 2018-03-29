@@ -1,0 +1,47 @@
+{
+  "name": "rollup-plugin-gltf",
+  "version": "0.0.0",
+  "description": "Rollup plugin for embedding or copying glTF models into bundles.",
+  "main": "dist/rollup-plugin-gltf.js",
+  "module": "dist/rollup-plugin-gltf.module.js",
+  "jsnext:main": "dist/rollup-plugin-gltf.module.js",
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "npm run lint && mocha ./test/tests.js --require babel-core/register",
+    "pretest": "npm run build",
+    "build": "npm run build:cjs && npm run build:module",
+    "build:cjs": "rollup -c -o ./dist/rollup-plugin-gltf.js -f cjs",
+    "build:module": "rollup -c -o ./dist/rollup-plugin-gltf.module.js -f es",
+    "prebuild": "rimraf dist/*",
+    "lint": "eslint ./src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@Github:bengsfort/rollup-plugin-gltf.git"
+  },
+  "keywords": [
+    "rollup",
+    "rollup-plugin",
+    "gltf",
+    "gltf-loader"
+  ],
+  "author": "Matt Bengston <bengston.matthew@gmail.com> (https://bengsfort.github.io)",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1",
+    "mocha": "^5.0.5",
+    "rimraf": "^2.6.2",
+    "rollup": "^0.57.1",
+    "rollup-plugin-babel": "^3.0.3"
+  },
+  "peerDependencies": {
+    "rollup": ">=0.50.0"
+  }
+}
