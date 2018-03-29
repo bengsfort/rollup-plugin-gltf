@@ -6,7 +6,7 @@ import gltf from '../dist/rollup-plugin-gltf.module'
 
 const output = 'output/bundle.js';
 const models = {
-  embeddedBinary: './fixtures/import-embedded-binary.js',
+  embeddedBinary: './fixtures/import-embedded-buffer.js',
   externalBinary: './fixtures/import-external-buffer.js',
 };
 
@@ -14,10 +14,14 @@ const models = {
 process.chdir(__dirname);
 
 describe('rollup-plugin-gltf', function() {
-  it('should return true', function(done) {
-    expect(true).to.be.true;
+  it('should be true', function(done) {
+    console.log('inside should be true');
+    build(models.embeddedBinary, {})
+      .then(() => done());
   });
 });
+
+
 
 // Run the rollup build with an plugin configuration.
 function build(model, config) {

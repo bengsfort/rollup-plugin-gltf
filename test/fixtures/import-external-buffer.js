@@ -1,3 +1,3 @@
-import model from './TreasureChest_external_buffer.gltf';
+import model from './assets/TreasureChest_external_buffer.gltf';
 
 export default model;
