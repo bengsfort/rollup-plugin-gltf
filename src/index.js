@@ -23,17 +23,34 @@ export default function gltf(opts = {}) {
     inline = false, //eslint-disable-line
   } = opts;
   const filter = createFilter(include, exclude);
-
+  const additionalFiles = {};
+  // @todo: path.join will work just fine with extensions.
+  // ie: path.join(id, '../', uri);
   return {
     name: 'gltf',
     load(id) {
-      if (!filter(id)) {
+      if (id.slice(-5) !== '.gltf' || !filter(id)) {
         return null;
       }
       return Promise.all([
         promisify(stat, id), // Get the stats of the file
         promisify(readFile, id), // Read the files contents
       ]).then(([fileStats, buffer]) => {
+        const model = Object.assign({}, JSON.parse(buffer.toString()));
+
+        additionalFiles[id] = [];
+
+        // Copy any buffers over
+        for (let i = 0; i < model.buffers.length; i++) {
+          if (model.buffers[i].uri.slice(-4) !== '.bin') {
+            additionalFiles[id].push(model.buffers[i].uri);
+          }
+        }
+
+        for (let i = 0; i < model.images.length; i++) {
+          additionalFiles[id].push(model.images[i].uri);
+        }
+
         if (fileStats.size > inlineAssetLimit) {
           //  Copy the file
           console.log('\tFile is bigger than inline limit, copy the file.');
@@ -43,6 +60,12 @@ export default function gltf(opts = {}) {
         }
       });
     },
+    // transform(json, id) {
+    //   if (id.slice(-5) !== '.gltf' || !filter(id)) {
+    //     return null;
+    //   }
+    //   console.log('json in transform ~~', json);
+    // },
   };
 }
 

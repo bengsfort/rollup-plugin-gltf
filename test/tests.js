@@ -16,7 +16,7 @@ process.chdir(__dirname);
 describe('rollup-plugin-gltf', function() {
   it('should be true', function(done) {
     console.log('inside should be true');
-    build(models.embeddedBinary, {})
+    build(models.externalBinary, {})
       .then(() => done());
   });
 });

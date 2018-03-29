@@ -52,7 +52,7 @@ loader.load(chestModel, function(gltf) {
 
 - `include`: **(optional)** The glob for file patterns that should be included.
 - `exclude`: **(optional)** The glob for file patterns that should be excluded.
-- `inlineAssetLimit`: **(optional)** The size (in bytes) at which to copy asset files over rather than embed them into the gltf file. Defaults to 75000 (75kb).
+- `inlineAssetLimit`: **(optional)** The size (in bytes) at which to copy asset files over rather than embed them into the gltf file. Defaults to 76800.
 - `inline`: Boolean determining whether to expose the resolved gltf file as json rather than a uri to the asset.
 
 ## License
