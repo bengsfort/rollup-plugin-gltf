@@ -34,7 +34,13 @@ export default function gltf(opts = {}) {
         promisify(stat, id), // Get the stats of the file
         promisify(readFile, id), // Read the files contents
       ]).then(([fileStats, buffer]) => {
-        console.log(fileStats);
+        if (fileStats.size > inlineAssetLimit) {
+          //  Copy the file
+          console.log('\tFile is bigger than inline limit, copy the file.');
+        } else {
+          // Inline the file
+          console.log('\tFile is smaller than the limit, embed the file.');
+        }
       });
     },
   };
