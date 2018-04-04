@@ -125,22 +125,18 @@ export default function gltf(opts = {}) {
       const outputDir = path.dirname(options.file);
       const files = Object.keys(additionalFiles);
 
-      console.log('additionalFiles', additionalFiles);
       const copies = files.map((file) => new Promise((resolve, reject) => {
         // Copy all associated assets
-        console.log('Copying assets...');
         const assets = additionalFiles[file].map((asset) => {
-          const output = path.relative(basedir, asset);
+          const output = path.join(outputDir, path.relative(basedir, asset));
           return ensureFolderExists(output)
             .then(() => copyFile(asset, output))
-            .then(() => console.log('Finished copying', output))
             .catch((err) => console.error(
               'There was an error copying an asset :(', err
             ));
         });
 
         // Write the transformed gltf file if we are not inlining it
-        console.log('Write transformed gltf file...');
         let modelCopy = null;
         if (!inline) {
           const targetFile = path.resolve(path.join(outputDir, file));
@@ -152,11 +148,9 @@ export default function gltf(opts = {}) {
             ));
         }
 
-        console.log('Return when complete...');
-        return Promise.all([
-          modelCopy,
-          ...assets,
-        ]);
+        Promise.all([modelCopy, ...assets])
+          .then(() => resolve())
+          .catch(() => reject());
       }));
 
       return Promise.all(copies);
@@ -174,10 +168,9 @@ function copyFile(file, destination) {
   return new Promise((resolve, reject) => {
     const read = createReadStream(file);
     read.on('error', reject);
-    read.on('finish', resolve);
     const write = createWriteStream(destination);
     write.on('error', reject);
-    write.on('finish', resolve);
+    write.on('close', resolve);
     read.pipe(write);
   });
 }
