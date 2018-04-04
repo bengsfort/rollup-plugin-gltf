@@ -17,17 +17,30 @@ process.chdir(__dirname);
 describe('rollup-plugin-gltf', function() {
   beforeEach(() => promisify(rimraf, 'output/'));
 
-  it('should copy the gltf file to the output directory', function(done) {
+  it('should copy the gltf file/assets to the output directory', function(done) {
     build(models.externalBinary, {
       inline: false,
       inlineAssetLimit: 1, // copy over EVERYTHING
-    })
-      .then(() => getFileStats(
-        'output/assets/buffer.bin',
-        'output/assets/TreasureChest_diffuse.png',
-        'output/assets/TreasureChest_external_buffer.gltf'
-      ))
-      .then(() => done());
+    }).then(() => getFileStats(
+      'output/assets/buffer.bin',
+      'output/assets/TreasureChest_diffuse.png',
+      'output/assets/TreasureChest_external_buffer.gltf'
+    )).then((exists) =>
+      expect(exists).to.deep.equal([true, true, true])
+    ).then(() => done());
+  });
+
+  it('should only copy assets if inlined', function(done) {
+    build(models.externalBinary, {
+      inline: true,
+      inlineAssetLimit: 1,
+    }).then(() => getFileStats(
+      'output/assets/buffer.bin',
+      'output/assets/TreasureChest_diffuse.png',
+      'output/assets/TreasureChest_external_buffer.gltf'
+    )).then((exists) =>
+      expect(exists).to.deep.equal([true, true, false])
+    ).then(() => done());
   });
 });
 

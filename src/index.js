@@ -111,10 +111,10 @@ export default function gltf(opts = {}) {
         })
         // Return a string representing what will be provided to the javascript.
         .then((model) => {
-          const jsonModel = JSON.stringify(model, null, '  ');
-          transformedModels[basepath] = jsonModel;
+          transformedModels[basepath] = JSON.stringify(model, null, '  ');
           if (inline) {
-            return `export default '${jsonModel}';`;
+            // @todo: this is not adding the correct directory prefix to assets
+            return `export default '${JSON.stringify(model)}';`;
           }
           return `export default '${basepath}';`;
         })
