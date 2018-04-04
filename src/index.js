@@ -32,8 +32,8 @@ export default function gltf(opts = {}) {
   const {
     include = DEFAULT_INCLUDES,
     exclude,
-    inlineAssetLimit = 75 * 1024, //eslint-disable-line
-    inline = false, //eslint-disable-line
+    inlineAssetLimit = 75 * 1024,
+    inline = false,
   } = opts;
 
   // Create a file filter
@@ -95,6 +95,7 @@ export default function gltf(opts = {}) {
               additionalFiles[basepath].push(images[i].file);
               return image; // Return the original model, nothing to do.
             }
+
             // Create a copy of the image model with the base64 encoded image
             // instead of an asset uri path.
             const mimetype = MIME_TYPES[path.extname(images[i].file)];
@@ -182,6 +183,8 @@ function getFileStats(file) {
 
 /**
  * Recursively makes directories until the given directory exists.
+ * @todo: This is throwing an error on nested directories:
+ *  Error: EISDIR: illegal operation on a directory, open'output/assets'
  * @param {any} file The file or directory to check.
  * @return {Promise<string>} A promise resolving to the created directory.
  */
