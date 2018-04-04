@@ -14,10 +14,10 @@ const models = {
 process.chdir(__dirname);
 
 describe('rollup-plugin-gltf', function() {
-  it('should be true', function(done) {
-    console.log('inside should be true');
+  it('should copy the gltf file to the output directory', function(done) {
     build(models.externalBinary, {})
-      .then(() => done());
+      .then(() => done())
+      .catch((reason) => console.error('There was an error.', reason));
   });
 });
 
