@@ -5,7 +5,7 @@ import {
   readFile,
   writeFile,
   createReadStream,
-  // createWriteStream,
+  createWriteStream,
 } from 'fs';
 import path from 'path';
 
@@ -66,6 +66,7 @@ export default function gltf(opts = {}) {
 
       // Read the file contents
       return promisify(readFile, id)
+        // Read the gltf file and get the stats of each embedded asset.
         .then((buffer) => {
           // Copy the asset
           const model = Object.assign({}, JSON.parse(buffer.toString()));
@@ -87,6 +88,7 @@ export default function gltf(opts = {}) {
 
           return Promise.all([model, ...imageStats]);
         })
+        // Transform the model, inlining any assets over the asset size limit.
         .then(([model, ...images]) => {
           // Create a copy of the images array with the paths updated.
           model.images = model.images.map((image, i) => {
@@ -107,8 +109,9 @@ export default function gltf(opts = {}) {
 
           return model;
         })
+        // Return a string representing what will be provided to the javascript.
         .then((model) => {
-          const jsonModel = JSON.stringify(model);
+          const jsonModel = JSON.stringify(model, null, '  ');
           transformedModels[basepath] = jsonModel;
           if (inline) {
             return `export default '${jsonModel}';`;
@@ -125,21 +128,31 @@ export default function gltf(opts = {}) {
       console.log('additionalFiles', additionalFiles);
       const copies = files.map((file) => new Promise((resolve, reject) => {
         // Copy all associated assets
+        console.log('Copying assets...');
         const assets = additionalFiles[file].map((asset) => {
           const output = path.relative(basedir, asset);
           return ensureFolderExists(output)
-            .then((p) => copyFile(asset, p));
+            .then(() => copyFile(asset, output))
+            .then(() => console.log('Finished copying', output))
+            .catch((err) => console.error(
+              'There was an error copying an asset :(', err
+            ));
         });
 
         // Write the transformed gltf file if we are not inlining it
+        console.log('Write transformed gltf file...');
         let modelCopy = null;
         if (!inline) {
-          const targetFile = path.join(outputDir, file);
+          const targetFile = path.resolve(path.join(outputDir, file));
           const model = transformedModels[file];
           modelCopy = ensureFolderExists(targetFile)
-            .then((p) => promisify(writeFile, p, model, 'utf8'));
+            .then(() => promisify(writeFile, targetFile, model, 'utf8'))
+            .catch((err) => console.error(
+              'There was an error writing the transformed model :(', err
+            ));
         }
 
+        console.log('Return when complete...');
         return Promise.all([
           modelCopy,
           ...assets,
@@ -162,10 +175,10 @@ function copyFile(file, destination) {
     const read = createReadStream(file);
     read.on('error', reject);
     read.on('finish', resolve);
-    // const write = createWriteStream(destination);
-    // write.on('error', reject);
-    // write.on('finish', resolve);
-    // read.pipe(write);
+    const write = createWriteStream(destination);
+    write.on('error', reject);
+    write.on('finish', resolve);
+    read.pipe(write);
   });
 }
 
@@ -184,7 +197,7 @@ function getFileStats(file) {
 /**
  * Recursively makes directories until the given directory exists.
  * @todo: This is throwing an error on nested directories:
- *  Error: EISDIR: illegal operation on a directory, open'output/assets'
+ *  Error: EISDIR: illegal operation on a directory, open 'output/assets'
  * @param {any} file The file or directory to check.
  * @return {Promise<string>} A promise resolving to the created directory.
  */
