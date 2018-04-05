@@ -26,7 +26,7 @@ const modelOutput = {
 process.chdir(__dirname);
 
 describe('rollup-plugin-gltf', function() {
-  beforeEach(() => promisify(rimraf, 'output/'));
+  afterEach(() => promisify(rimraf, 'output/'));
 
   it('should copy the gltf file/assets to the output directory', function(done) {
     build(models.externalBinary, {
