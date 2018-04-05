@@ -22,9 +22,9 @@ export default {
   plugins: [
     gltf({
       include: '**/*.gltf',
-	  exclude: 'artwork/*.gltf',
-	  inlineAssetLimit: 250 * 1000, // 250kb
-	  inline: false,
+      exclude: 'artwork/*.gltf',
+      inlineAssetLimit: 250 * 1024, // 250kb
+      inline: false,
     }),
   ],
 };
@@ -50,7 +50,7 @@ loader.load(chestModel, function(gltf) {
 
 ### Options
 
-- `include`: **(optional)** The glob for file patterns that should be included.
+- `include`: **(optional)** The glob for file patterns that should be included. Defaults to all `.gltf` files.
 - `exclude`: **(optional)** The glob for file patterns that should be excluded.
 - `inlineAssetLimit`: **(optional)** The size (in bytes) at which to copy asset files over rather than embed them into the gltf file. Defaults to 76800.
 - `inline`: Boolean determining whether to expose the resolved gltf file as json rather than a uri to the asset.

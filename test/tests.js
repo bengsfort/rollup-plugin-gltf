@@ -55,6 +55,27 @@ describe('rollup-plugin-gltf', function() {
   });
 
   describe('copied gltf', function() {
+    it('should give the js a valid gltf asset path', function(done) {
+      build(models.externalBinary, {
+        inline: false,
+        inlineAssetLimit: 1,
+      }).then(() =>
+        promisify(readFile, 'output/bundle.js')
+      ).then((buffer) =>
+        buffer.toString('utf8')
+      ).then((code) => {
+        expect(code).to.be.a('string');
+        const lines = code.split('\n');
+        const expectedPath = modelOutput.externalBinary.slice('output/');
+        expect(lines).to.be.an('array').that.includes(
+          `\tvar model = '${expectedPath}';`
+        );
+        return checkFilesExist(path.dirname(output), expectedPath);
+      }).then((exists) =>
+        expect(exists).to.deep.equal([true])
+      ).then(() => done(), () => done());
+    });
+
     it('should keep valid asset references', function(done) {
       build(models.externalBinary, {
         inline: false,
@@ -184,7 +205,7 @@ function promisify(fn, ...args) {
 
 // Gets a parsed JSON object representing the inlined gltf output.
 function getGltfInlineOutput() {
-  return promisify(readFile, 'output/bundle.js')
+  return promisify(readFile, output)
     .then((buffer) => buffer.toString('utf8'))
     .then((code) => {
       const intro = 'model = \'';
