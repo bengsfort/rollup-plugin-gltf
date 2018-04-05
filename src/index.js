@@ -73,12 +73,21 @@ export default function gltf(opts = {}) {
 
           // Copy any buffers over. If a buffer is already base64 encoded there
           // isn't anything additional for us to do...
-          const buffers = model.buffers.filter((buffer) =>
-            buffer.uri.slice(-4) === '.bin'
-          );
-          additionalFiles[basepath] = additionalFiles[basepath].concat(
-            buffers.map((buffer) => path.join(id, '../', buffer.uri)
-          ));
+          model.buffers = model.buffers.map((buffer) => {
+            if (buffer.uri.slice(-4) !== '.bin') {
+              return buffer;
+            }
+
+            additionalFiles[basepath].push(path.join(id, '../', buffer.uri));
+
+            // Update the model to use the path of the copied asset.
+            if (inline) {
+              return Object.assign({}, buffer, {
+                uri: path.join(path.dirname(basepath), buffer.uri),
+              });
+            }
+            return buffer;
+          });
 
           // Get all of the asset files sizes so we can determine whether or not
           // they should be inlined or just copied over.
@@ -95,6 +104,9 @@ export default function gltf(opts = {}) {
             // If the file is over the asset limit, flag it for copying.
             if (images[i].stats.size > inlineAssetLimit) {
               additionalFiles[basepath].push(images[i].file);
+              if (inline) {
+                return path.join(path.dirname(basepath), image.uri);
+              }
               return image; // Return the original model, nothing to do.
             }
 
@@ -113,7 +125,6 @@ export default function gltf(opts = {}) {
         .then((model) => {
           transformedModels[basepath] = JSON.stringify(model, null, '  ');
           if (inline) {
-            // @todo: this is not adding the correct directory prefix to assets
             return `export default '${JSON.stringify(model)}';`;
           }
           return `export default '${basepath}';`;
