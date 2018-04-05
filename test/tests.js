@@ -21,7 +21,7 @@ describe('rollup-plugin-gltf', function() {
     build(models.externalBinary, {
       inline: false,
       inlineAssetLimit: 1, // copy over EVERYTHING
-    }).then(() => getFileStats(
+    }).then(() => checkFilesExist(
       'output/assets/buffer.bin',
       'output/assets/TreasureChest_diffuse.png',
       'output/assets/TreasureChest_external_buffer.gltf'
@@ -34,7 +34,7 @@ describe('rollup-plugin-gltf', function() {
     build(models.externalBinary, {
       inline: true,
       inlineAssetLimit: 1,
-    }).then(() => getFileStats(
+    }).then(() => checkFilesExist(
       'output/assets/buffer.bin',
       'output/assets/TreasureChest_diffuse.png',
       'output/assets/TreasureChest_external_buffer.gltf'
@@ -58,7 +58,8 @@ function promisify(fn, ...args) {
   });
 }
 
-function getFileStats(...files) {
+// Checks whether or not the provided files exist.
+function checkFilesExist(...files) {
   const slice = Array.from(files);
   return Promise.all(slice.map((file) =>
     promisify(stat, file).then(() => true, () => false)
