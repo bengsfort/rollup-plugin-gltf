@@ -68,8 +68,10 @@ export default function gltf(opts = {}) {
       return promisify(readFile, id)
         // Read the gltf file and get the stats of each embedded asset.
         .then((buffer) => {
-          // Copy the asset
-          const model = Object.assign({}, JSON.parse(buffer.toString()));
+          // Copy the asset, adding empty arrays to anything not there
+          const model = Object.assign({
+            images: [],
+          }, JSON.parse(buffer.toString()));
 
           // Copy any buffers over. If a buffer is already base64 encoded there
           // isn't anything additional for us to do...
@@ -101,6 +103,10 @@ export default function gltf(opts = {}) {
         .then(([model, ...images]) => {
           // Create a copy of the images array with the paths updated.
           model.images = model.images.map((image, i) => {
+            if (image === null) {
+              return;
+            }
+
             // If the file is over the asset limit, flag it for copying.
             if (images[i].stats.size > inlineAssetLimit) {
               additionalFiles[basepath].push(images[i].file);

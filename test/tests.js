@@ -16,6 +16,7 @@ const BUFFER_DATA_ATTR = 'data:application/octet-stream;base64';
 const models = {
   embeddedBinary: './fixtures/import-embedded-buffer.js',
   externalBinary: './fixtures/import-external-buffer.js',
+  noImages: './fixtures/import-no-images.js',
 };
 const modelOutput = {
   embeddedBinary: 'output/assets/TreasureChest_embedded_buffer.gltf',
@@ -52,6 +53,20 @@ describe('rollup-plugin-gltf', function() {
     )).then((exists) =>
       expect(exists).to.deep.equal([true, true, false])
     ).then(() => done(), () => done());
+  });
+
+  // Test for: https://github.com/bengsfort/rollup-plugin-gltf/issues/1
+  it('should not fail if no images are included in the asset', function(done) {
+    let activeBuild;
+    expect(() => {
+      activeBuild = build(models.noImages, {
+        inline: true,
+        inlineAssetLimit: 1
+      });
+    }).to.not.throw();
+    activeBuild
+      .then(() => done())
+      .catch((err) => done(err));
   });
 
   describe('copied gltf', function() {
