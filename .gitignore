@@ -2,3 +2,5 @@ node_modules
 dist
 .vscode
 test/output
+.DS_Store
+tags
