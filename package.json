@@ -8,7 +8,7 @@
   "files": ["dist", "src", "README.md"],
   "scripts": {
     "coverage": "lcov-badge-generator -o ./coverage/coverage.svg ./coverage/lcov.info",
-    "test": "yarn lint && jest ./test/tests.js",
+    "test": "yarn lint && jest",
     "posttest": "yarn coverage",
     "build": "yarn build:cjs && yarn build:module",
     "build:cjs": "rollup -c -o ./dist/rollup-plugin-gltf.js -f cjs",
@@ -34,6 +34,7 @@
     "babel-jest": "^24.8.0",
     "eslint": "^5.16.0",
     "eslint-plugin-jest": "^22.5.1",
+    "fs-extra": "^8.0.1",
     "husky": "^2.3.0",
     "jest": "^24.8.0",
     "lcov-badge-generator": "^1.0.5",
