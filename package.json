@@ -1,6 +1,6 @@
 {
   "name": "rollup-plugin-gltf",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Rollup plugin for embedding or copying glTF models into bundles.",
   "main": "dist/rollup-plugin-gltf.js",
   "module": "dist/rollup-plugin-gltf.module.js",

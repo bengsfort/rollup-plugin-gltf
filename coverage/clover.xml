@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1558557357670" clover="3.2.0">
-  <project timestamp="1558557357670" name="All files">
+<coverage generated="1558557768781" clover="3.2.0">
+  <project timestamp="1558557768781" name="All files">
     <metrics statements="92" coveredstatements="84" conditionals="30" coveredconditionals="23" methods="31" coveredmethods="27" elements="153" coveredelements="134" complexity="0" loc="92" ncloc="92" packages="1" files="1" classes="1"/>
     <file name="index.js" path="C:\Users\bengs\Workspace\Apps\rollup-plugin-gltf\src\index.js">
       <metrics statements="92" coveredstatements="84" conditionals="30" coveredconditionals="23" methods="31" coveredmethods="27"/>
@@ -40,42 +40,42 @@
       <line num="115" count="8" type="stmt"/>
       <line num="118" count="8" type="stmt"/>
       <line num="127" count="8" type="stmt"/>
-      <line num="128" count="7" type="stmt"/>
-      <line num="132" count="8" type="stmt"/>
-      <line num="135" count="8" type="stmt"/>
-      <line num="138" count="8" type="stmt"/>
-      <line num="141" count="8" type="cond" truecount="2" falsecount="0"/>
-      <line num="142" count="4" type="stmt"/>
-      <line num="146" count="4" type="stmt"/>
-      <line num="148" count="0" type="stmt"/>
-      <line num="153" count="8" type="stmt"/>
-      <line num="154" count="8" type="stmt"/>
+      <line num="129" count="7" type="stmt"/>
+      <line num="134" count="8" type="stmt"/>
+      <line num="137" count="8" type="stmt"/>
+      <line num="140" count="8" type="stmt"/>
+      <line num="143" count="8" type="cond" truecount="2" falsecount="0"/>
+      <line num="144" count="4" type="stmt"/>
+      <line num="148" count="4" type="stmt"/>
+      <line num="150" count="0" type="stmt"/>
+      <line num="155" count="8" type="stmt"/>
       <line num="156" count="8" type="stmt"/>
       <line num="158" count="8" type="stmt"/>
       <line num="160" count="8" type="stmt"/>
-      <line num="161" count="10" type="stmt"/>
-      <line num="165" count="10" type="stmt"/>
-      <line num="166" count="10" type="stmt"/>
-      <line num="168" count="0" type="stmt"/>
-      <line num="173" count="8" type="stmt"/>
-      <line num="174" count="8" type="cond" truecount="2" falsecount="0"/>
-      <line num="175" count="4" type="stmt"/>
-      <line num="176" count="4" type="stmt"/>
+      <line num="162" count="8" type="stmt"/>
+      <line num="163" count="10" type="stmt"/>
+      <line num="167" count="10" type="stmt"/>
+      <line num="168" count="10" type="stmt"/>
+      <line num="170" count="0" type="stmt"/>
+      <line num="175" count="8" type="stmt"/>
+      <line num="176" count="8" type="cond" truecount="2" falsecount="0"/>
       <line num="177" count="4" type="stmt"/>
       <line num="178" count="4" type="stmt"/>
-      <line num="180" count="0" type="stmt"/>
-      <line num="187" count="8" type="stmt"/>
-      <line num="188" count="8" type="stmt"/>
-      <line num="189" count="0" type="stmt"/>
-      <line num="193" count="8" type="stmt"/>
-      <line num="205" count="10" type="stmt"/>
-      <line num="206" count="10" type="stmt"/>
+      <line num="179" count="4" type="stmt"/>
+      <line num="180" count="4" type="stmt"/>
+      <line num="182" count="0" type="stmt"/>
+      <line num="189" count="8" type="stmt"/>
+      <line num="190" count="8" type="stmt"/>
+      <line num="191" count="0" type="stmt"/>
+      <line num="195" count="8" type="stmt"/>
       <line num="207" count="10" type="stmt"/>
       <line num="208" count="10" type="stmt"/>
       <line num="209" count="10" type="stmt"/>
       <line num="210" count="10" type="stmt"/>
       <line num="211" count="10" type="stmt"/>
-      <line num="221" count="7" type="stmt"/>
+      <line num="212" count="10" type="stmt"/>
+      <line num="213" count="10" type="stmt"/>
+      <line num="223" count="7" type="stmt"/>
       <line num="224" count="7" type="stmt"/>
       <line num="236" count="14" type="stmt"/>
       <line num="237" count="14" type="stmt"/>
