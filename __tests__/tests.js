@@ -2,13 +2,8 @@ import { rollup } from "rollup";
 import os from "os";
 import fs from "fs-extra";
 import path from "path";
-import rimraf from "rimraf";
 
 import gltf from "../src";
-
-const output = "output/bundle.js";
-const TEXTURE_FILE = "TreasureChest_diffuse.png";
-const BUFFER_FILE = "buffer.bin";
 
 const TEXTURE_DATA_ATTR = "data:image/png;base64";
 const BUFFER_DATA_ATTR = "data:application/octet-stream;base64";
@@ -43,7 +38,7 @@ it("should copy the gltf file/assets to the output directory", async () => {
     "assets/TreasureChest_external_buffer.gltf"
   );
 
-  const input = {
+  const bundle = await rollup({
     input: `${__dirname}/fixtures/import-external-buffer.js`,
     plugins: [
       gltf({
@@ -51,14 +46,12 @@ it("should copy the gltf file/assets to the output directory", async () => {
         inlineAssetLimit: 1, // copy over ERRYTHANG
       }),
     ],
-  };
-  const output = {
+  });
+  await bundle.write({
     file: BUNDLE_PATH,
     format: "iife",
     name: "test",
-  };
-  const bundle = await rollup(input);
-  await bundle.write(output);
+  });
 
   await expect(fs.pathExists(BUNDLE_PATH)).resolves.toEqual(true);
   await expect(fs.pathExists(BINARY_PATH)).resolves.toEqual(true);
@@ -75,7 +68,7 @@ it("should only copy assets if inlined", async () => {
     "assets/TreasureChest_external_buffer.gltf"
   );
 
-  const input = {
+  const bundle = await rollup({
     input: `${__dirname}/fixtures/import-external-buffer.js`,
     plugins: [
       gltf({
@@ -83,14 +76,12 @@ it("should only copy assets if inlined", async () => {
         inlineAssetLimit: 1,
       }),
     ],
-  };
-  const output = {
+  });
+  await bundle.write({
     file: BUNDLE_PATH,
     format: "iife",
     name: "test",
-  };
-  const bundle = await rollup(input);
-  await bundle.write(output);
+  });
 
   await expect(fs.pathExists(BUNDLE_PATH)).resolves.toEqual(true);
   await expect(fs.pathExists(BINARY_PATH)).resolves.toEqual(true);
@@ -102,8 +93,8 @@ it("should only copy assets if inlined", async () => {
 it("should not fail if no images are included in the asset", async () => {
   const BUNDLE_PATH = path.join(TEST_DIR, "bundle.js");
 
-  function build() {
-    const input = {
+  async function build() {
+    const bundle = await rollup({
       input: `${__dirname}/fixtures/import-no-images.js`,
       plugins: [
         gltf({
@@ -111,16 +102,14 @@ it("should not fail if no images are included in the asset", async () => {
           inlineAssetLimit: 1,
         }),
       ],
-    };
-    const output = {
+    });
+    return await bundle.write({
       file: BUNDLE_PATH,
       format: "iife",
       name: "test",
-    };
-    return rollup(input).then(bundle => bundle.write(output));
+    });
   }
 
-  let activeBuild;
   await expect(build()).resolves.not.toThrow();
 });
 
@@ -132,7 +121,7 @@ describe("copied gltf", () => {
       "assets/TreasureChest_external_buffer.gltf"
     );
 
-    const input = {
+    const bundle = await rollup({
       input: `${__dirname}/fixtures/import-external-buffer.js`,
       plugins: [
         gltf({
@@ -140,14 +129,12 @@ describe("copied gltf", () => {
           inlineAssetLimit: 1,
         }),
       ],
-    };
-    const output = {
+    });
+    await bundle.write({
       file: BUNDLE_PATH,
       format: "iife",
       name: "test",
-    };
-    const bundle = await rollup(input);
-    await bundle.write(output);
+    });
 
     // Validate that the generated bundle contains the correct path
     const generatedBuffer = await fs.readFile(BUNDLE_PATH);
@@ -213,111 +200,126 @@ describe("copied gltf", () => {
       TEST_DIR,
       "assets/TreasureChest_embedded_buffer.gltf"
     );
+
+    const bundle = await rollup({
+      input: `${__dirname}/fixtures/import-embedded-buffer.js`,
+      plugins: [
+        gltf({
+          inline: false,
+          inlineAssetLimit: 900 * 1024,
+        }),
+      ],
+    });
+    await bundle.write({
+      file: BUNDLE_PATH,
+      format: "iife",
+      name: "test",
+    });
+
+    // Make sure everything is inlined
+    const output = await getGltfFileOutput(GLTF_PATH);
+    expect(output).toHaveProperty("asset");
+    expect(output).toHaveProperty("buffers");
+    expect(output.buffers[0].uri.slice(0, BUFFER_DATA_ATTR.length)).toEqual(
+      BUFFER_DATA_ATTR
+    );
+    expect(output).toHaveProperty("images");
+    expect(output.images[0].uri.slice(0, TEXTURE_DATA_ATTR.length)).toEqual(
+      TEXTURE_DATA_ATTR
+    );
+
+    await expect(fs.pathExists(GLTF_PATH)).resolves.toEqual(true);
+    await expect(fs.pathExists(BINARY_PATH)).resolves.toEqual(false);
+    await expect(fs.pathExists(TEXTURE_PATH)).resolves.toEqual(false);
   });
 });
 
-// it("should inline assets when they are over the asset limit", function(done) {
-//   build(models.embeddedBinary, {
-//     inline: false,
-//     inlineAssetLimit: 900 * 1024,
-//   })
-//     .then(() => getGltfFileOutput(modelOutput.embeddedBinary))
-//     .then(gltf => {
-//       // Make sure that the arrays are there
-//       expect(gltf)
-//         .to.be.an("object")
-//         .that.has.keys("asset", "buffers", "images");
-//       expect(gltf.buffers)
-//         .to.be.an("array")
-//         .with.lengthOf(1);
-//       expect(gltf.buffers[0].uri.slice(0, BUFFER_DATA_ATTR.length)).to.equal(
-//         BUFFER_DATA_ATTR
-//       );
-//       expect(gltf.images)
-//         .to.be.an("array")
-//         .with.lengthOf(1);
-//       expect(gltf.images[0].uri.slice(0, TEXTURE_DATA_ATTR.length)).to.equal(
-//         TEXTURE_DATA_ATTR
-//       );
+describe("inlined gltf", () => {
+  it("should keep valid asset references", async () => {
+    const BUNDLE_PATH = path.join(TEST_DIR, "bundle.js");
+    const BINARY_PATH = path.join(TEST_DIR, "assets/buffer.bin");
+    const TEXTURE_PATH = path.join(
+      TEST_DIR,
+      "assets/TreasureChest_diffuse.png"
+    );
+    const GLTF_PATH = path.join(
+      TEST_DIR,
+      "assets/TreasureChest_external_buffer.gltf"
+    );
 
-//       // Make sure the files dont exist given their paths
-//       const basedir = path.dirname(modelOutput.embeddedBinary);
-//       return checkFilesExist(
-//         path.join(basedir, BUFFER_FILE),
-//         path.join(basedir, TEXTURE_FILE)
-//       );
-//     })
-//     .then(exists => expect(exists).to.deep.equal([false, false]))
-//     .then(() => done(), () => done());
-// });
+    const bundle = await rollup({
+      input: `${__dirname}/fixtures/import-external-buffer.js`,
+      plugins: [
+        gltf({
+          inline: true,
+          inlineAssetLimit: 1,
+        }),
+      ],
+    });
+    await bundle.write({
+      file: BUNDLE_PATH,
+      format: "iife",
+      name: "test",
+    });
 
-// describe("inlined gltf", function() {
-//   it("should keep valid asset references", function(done) {
-//     build(models.externalBinary, {
-//       inline: true,
-//       inlineAssetLimit: 1,
-//     })
-//       .then(() => getGltfInlineOutput())
-//       .then(gltf => {
-//         // Make sure the arrays are there
-//         expect(gltf)
-//           .to.be.an("object")
-//           .that.has.keys("asset", "buffers", "images");
-//         expect(gltf.buffers)
-//           .to.be.an("array")
-//           .with.lengthOf(1);
-//         expect(gltf.buffers[0].uri).to.equal(BUFFER_FILE);
-//         expect(gltf.images)
-//           .to.be.an("array")
-//           .with.lengthOf(1);
-//         expect(gltf.images[0].uri).to.equal(TEXTURE_FILE);
+    // Make sure everything is inlined
+    const output = await getGltfInlineOutput(BUNDLE_PATH);
+    expect(output).toHaveProperty("asset");
+    expect(output).toHaveProperty("buffers");
+    expect(output.buffers[0].uri).toEqual("assets/buffer.bin");
+    expect(output).toHaveProperty("images");
+    expect(output.images[0].uri).toEqual("assets/TreasureChest_diffuse.png");
 
-//         // Make sure the files exist given their paths
-//         const basedir = path.dirname(output);
-//         return checkFilesExist(
-//           path.join(basedir, gltf.buffers[0].uri),
-//           path.join(basedir, gltf.images[0].uri)
-//         );
-//       })
-//       .then(exists => expect(exists).to.deep.equal([true, true]))
-//       .then(() => done(), () => done());
-//   });
+    await expect(fs.pathExists(GLTF_PATH)).resolves.toEqual(false);
+    await expect(fs.pathExists(BINARY_PATH)).resolves.toEqual(true);
+    await expect(fs.pathExists(TEXTURE_PATH)).resolves.toEqual(true);
+  });
 
-// it("should inline assets when they are over the asset limit", function(done) {
-//   build(models.embeddedBinary, {
-//     inline: true,
-//     inlineAssetLimit: 900 * 1024,
-//   })
-//     .then(() => getGltfInlineOutput(modelOutput.embeddedBinary))
-//     .then(gltf => {
-//       // Make sure that the arrays are there
-//       expect(gltf)
-//         .to.be.an("object")
-//         .that.has.keys("asset", "buffers", "images");
-//       expect(gltf.buffers)
-//         .to.be.an("array")
-//         .with.lengthOf(1);
-//       expect(gltf.buffers[0].uri.slice(0, BUFFER_DATA_ATTR.length)).to.equal(
-//         BUFFER_DATA_ATTR
-//       );
-//       expect(gltf.images)
-//         .to.be.an("array")
-//         .with.lengthOf(1);
-//       expect(gltf.images[0].uri.slice(0, TEXTURE_DATA_ATTR.length)).to.equal(
-//         TEXTURE_DATA_ATTR
-//       );
+  it("should inline assets when they are over the asset limit", async () => {
+    const BUNDLE_PATH = path.join(TEST_DIR, "bundle.js");
+    const BINARY_PATH = path.join(TEST_DIR, "assets/buffer.bin");
+    const TEXTURE_PATH = path.join(
+      TEST_DIR,
+      "assets/TreasureChest_diffuse.png"
+    );
+    const GLTF_PATH = path.join(
+      TEST_DIR,
+      "assets/TreasureChest_embedded_buffer.gltf"
+    );
 
-//       // Make sure the files dont exist given their paths
-//       const basedir = path.dirname(modelOutput.embeddedBinary);
-//       return checkFilesExist(
-//         path.join(basedir, BUFFER_FILE),
-//         path.join(basedir, TEXTURE_FILE)
-//       );
-//     })
-//     .then(exists => expect(exists).to.deep.equal([false, false]))
-//     .then(() => done(), () => done());
-// });
-// });
+    const bundle = await rollup({
+      input: `${__dirname}/fixtures/import-embedded-buffer.js`,
+      plugins: [
+        gltf({
+          inline: true,
+          inlineAssetLimit: 900 * 1024,
+        }),
+      ],
+    });
+    await bundle.write({
+      file: BUNDLE_PATH,
+      format: "iife",
+      name: "test",
+    });
+
+    // Make sure everything is inlined
+    const output = await getGltfInlineOutput(BUNDLE_PATH);
+    expect(output).toHaveProperty("asset");
+    expect(output).toHaveProperty("buffers");
+    expect(output.buffers[0].uri.slice(0, BUFFER_DATA_ATTR.length)).toEqual(
+      BUFFER_DATA_ATTR
+    );
+    expect(output).toHaveProperty("images");
+    expect(output.images[0].uri.slice(0, TEXTURE_DATA_ATTR.length)).toEqual(
+      TEXTURE_DATA_ATTR
+    );
+
+    await expect(fs.pathExists(BUNDLE_PATH)).resolves.toEqual(true);
+    await expect(fs.pathExists(GLTF_PATH)).resolves.toEqual(false);
+    await expect(fs.pathExists(BINARY_PATH)).resolves.toEqual(false);
+    await expect(fs.pathExists(TEXTURE_PATH)).resolves.toEqual(false);
+  });
+});
 
 // Gets a parsed JSON object representing the inlined gltf output.
 async function getGltfInlineOutput(file) {

@@ -44,6 +44,52 @@ export default function gltf(opts = {}) {
   // The base directory for the bundle.
   let basedir = "";
 
+  // If a buffer is already base64 encoded there isn't anything additional for us to do...
+  function getBuffers(model, id, basepath) {
+    return model.buffers.map(buffer => {
+      if (buffer.uri.slice(-4) !== ".bin") {
+        return buffer;
+      }
+
+      additionalFiles[basepath].push(path.join(id, "../", buffer.uri));
+
+      // Update the model to use the path of the copied asset.
+      if (inline) {
+        return Object.assign({}, buffer, {
+          uri: path.posix.join(path.dirname(basepath), buffer.uri),
+        });
+      }
+      return buffer;
+    });
+  }
+
+  function getImages(model, stats, basepath) {
+    return model.images.map((image, i) => {
+      if (image === null) {
+        return;
+      }
+
+      // If the file is over the asset limit, flag it for copying.
+      if (stats[i].stats.size > inlineAssetLimit) {
+        additionalFiles[basepath].push(stats[i].file);
+        if (inline) {
+          return Object.assign({}, image, {
+            uri: path.posix.join(path.dirname(basepath), image.uri),
+          });
+        }
+        return image; // Return the original model, nothing to do.
+      }
+
+      // Create a copy of the image model with the base64 encoded image
+      // instead of an asset uri path.
+      const mimetype = MIME_TYPES[path.extname(stats[i].file)];
+      const data = stats[i].buffer.toString("base64");
+      return Object.assign({}, image, {
+        uri: `data:${mimetype};base64,${data}`,
+      });
+    });
+  }
+
   return {
     name: "gltf",
 
@@ -52,7 +98,7 @@ export default function gltf(opts = {}) {
       basedir = path.dirname(opts.input);
     },
 
-    load(id) {
+    async load(id) {
       // Early out if the file is not relevant
       if (id.slice(-5) !== ".gltf" || !filter(id)) {
         return null;
@@ -60,89 +106,52 @@ export default function gltf(opts = {}) {
 
       // Create an array to hold the files that need to be copied
       const basepath = path.relative(basedir, id);
+      const normalizedPath = basepath.split(path.sep).join(path.posix.sep);
       additionalFiles[basepath] = [];
 
-      // Read the file contents
-      return (
-        promisify(readFile, id)
-          // Read the gltf file and get the stats of each embedded asset.
-          .then(buffer => {
-            // Copy the asset, adding empty arrays to anything not there
-            const model = Object.assign(
-              {
-                images: [],
-              },
-              JSON.parse(buffer.toString())
-            );
+      try {
+        // Read the file contents
+        // Read the gltf file and get the stats of each embedded asset.
+        const buffer = await promisify(readFile, id);
 
-            // Copy any buffers over. If a buffer is already base64 encoded there
-            // isn't anything additional for us to do...
-            model.buffers = model.buffers.map(buffer => {
-              if (buffer.uri.slice(-4) !== ".bin") {
-                return buffer;
-              }
+        // Copy the asset, adding empty arrays to anything not there
+        const model = Object.assign(
+          {
+            images: [],
+          },
+          JSON.parse(buffer.toString())
+        );
 
-              additionalFiles[basepath].push(path.join(id, "../", buffer.uri));
+        // Get all of the asset files sizes so we can determine whether or not
+        // they should be inlined or just copied over.
+        const imageStats = await Promise.all(
+          model.images.map(
+            async asset => await getFileStats(path.join(id, "../", asset.uri))
+          )
+        );
 
-              // Update the model to use the path of the copied asset.
-              if (inline) {
-                return Object.assign({}, buffer, {
-                  uri: path.join(path.dirname(basepath), buffer.uri),
-                });
-              }
-              return buffer;
-            });
+        // Copy any buffers over.
+        model.buffers = getBuffers(model, id, basepath);
 
-            // Get all of the asset files sizes so we can determine whether or not
-            // they should be inlined or just copied over.
-            const imageStats = model.images.map(asset =>
-              getFileStats(path.join(id, "../", asset.uri))
-            );
+        // Create a copy of the images array with the paths updated.
+        model.images = getImages(model, imageStats, basepath);
 
-            return Promise.all([model, ...imageStats]);
-          })
-          // Transform the model, inlining any assets over the asset size limit.
-          .then(([model, ...images]) => {
-            // Create a copy of the images array with the paths updated.
-            model.images = model.images.map((image, i) => {
-              if (image === null) {
-                return;
-              }
+        // Stringify the model into the transformed models store.
+        transformedModels[basepath] = JSON.stringify(model, null, "  ");
 
-              // If the file is over the asset limit, flag it for copying.
-              if (images[i].stats.size > inlineAssetLimit) {
-                additionalFiles[basepath].push(images[i].file);
-                if (inline) {
-                  return path.join(path.dirname(basepath), image.uri);
-                }
-                return image; // Return the original model, nothing to do.
-              }
+        // Return the entire model if we are inlined
+        if (inline) {
+          return `export default '${JSON.stringify(model)}';`;
+        }
 
-              // Create a copy of the image model with the base64 encoded image
-              // instead of an asset uri path.
-              const mimetype = MIME_TYPES[path.extname(images[i].file)];
-              const data = images[i].buffer.toString("base64");
-              return Object.assign({}, image, {
-                uri: `data:${mimetype};base64,${data}`,
-              });
-            });
-
-            return model;
-          })
-          // Return a string representing what will be provided to the javascript.
-          .then(model => {
-            transformedModels[basepath] = JSON.stringify(model, null, "  ");
-            if (inline) {
-              return `export default '${JSON.stringify(model)}';`;
-            }
-            return `export default '${basepath}';`;
-          })
-          // eslint-disable-next-line
-          .catch(e => console.warn("There was an error.", e))
-      );
+        // Otherwise, return the path.
+        return `export default '${normalizedPath}';`;
+      } catch (e) {
+        console.warn("[GLTF Plugin] There was an error.", e);
+      }
     },
 
-    onwrite(options) {
+    generateBundle(options) {
       const outputDir = path.dirname(options.file);
       const files = Object.keys(additionalFiles);
 
@@ -158,7 +167,6 @@ export default function gltf(opts = {}) {
               return ensureFolderExists(output)
                 .then(() => copyFile(asset, output))
                 .catch(err =>
-                  //eslint-disable-next-line
                   console.error("There was an error copying an asset :(", err)
                 );
             });
@@ -171,9 +179,7 @@ export default function gltf(opts = {}) {
               modelCopy = ensureFolderExists(targetFile)
                 .then(() => promisify(writeFile, targetFile, model, "utf8"))
                 .catch(err =>
-                  //eslint-disable-next-line
                   console.error(
-                    //eslint-disable-line
                     "There was an error writing the transformed model :(",
                     err
                   )

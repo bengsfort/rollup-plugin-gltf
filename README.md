@@ -1,6 +1,6 @@
 # rollup-plugin-gltf
 
-![build status](https://api.travis-ci.org/bengsfort/rollup-plugin-gltf.svg?branch=master) [![npm version](https://badge.fury.io/js/rollup-plugin-gltf.svg)](https://www.npmjs.com/package/rollup-plugin-gltf)
+![build status](https://api.travis-ci.org/bengsfort/rollup-plugin-gltf.svg?branch=master) [![npm version](https://badge.fury.io/js/rollup-plugin-gltf.svg)](https://www.npmjs.com/package/rollup-plugin-gltf) ![coverage](coverage/coverage.svg)
 
 Rollup plugin for embedding or copying glTF models into your bundles.
 
