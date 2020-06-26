@@ -152,7 +152,7 @@ export default function gltf(opts = {}) {
     },
 
     generateBundle(options) {
-      const outputDir = path.dirname(options.file);
+      const outputDir = path.dirname(options.file || options.dir);
       const files = Object.keys(additionalFiles);
 
       const copies = files.map(
